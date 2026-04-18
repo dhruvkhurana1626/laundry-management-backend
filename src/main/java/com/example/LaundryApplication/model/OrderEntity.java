@@ -37,6 +37,7 @@ public class OrderEntity {
     private BigDecimal totalAmount;
 
     @Column
+    @Enumerated(EnumType.STRING)
     private OrderStatus status;
 
     @OneToMany(mappedBy = "order",cascade = CascadeType.ALL)
