@@ -5,6 +5,7 @@ import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.Date;
 import java.util.List;
 
 @NoArgsConstructor
@@ -15,7 +16,7 @@ import java.util.List;
 
 public class OrderResponse {
 
-    private Long id;
+    private String id;
     private String customerName;
     private String phone;
     private String email;

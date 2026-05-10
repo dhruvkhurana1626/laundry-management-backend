@@ -2,6 +2,7 @@ package com.example.LaundryApplication.service;
 
 import com.example.LaundryApplication.dao.OrderEntityDao;
 import com.example.LaundryApplication.dto.request.OrderRequest;
+import com.example.LaundryApplication.dto.response.DashboardResponse;
 import com.example.LaundryApplication.dto.response.OrderResponse;
 import com.example.LaundryApplication.ecxeption.BusinessException;
 import com.example.LaundryApplication.enums.GarmentType;
@@ -11,13 +12,22 @@ import com.example.LaundryApplication.model.OrderEntity;
 import com.example.LaundryApplication.transformer.GarmentTransformer;
 import com.example.LaundryApplication.transformer.OrderTransformer;
 import com.example.LaundryApplication.utility.Validation;
+import jakarta.persistence.criteria.Order;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -85,5 +95,106 @@ public class OrderService {
             case LEHENGA: return BigDecimal.valueOf(2500);
             default: return BigDecimal.valueOf(500);
         }
+    }
+
+    public List<OrderResponse> getOrders(OrderStatus status, String search, Integer days, int page) {
+
+        Pageable pageable = PageRequest.of(page,10,Sort.by("createdAt").descending());
+        Page<OrderEntity> orderEntityPage = orderEntityDao.findAll(pageable);
+
+        List<OrderEntity> orders = orderEntityPage.getContent();
+
+        return orders.stream()
+                .filter(order -> status == null || order.getStatus() == status)
+                .filter(order -> {
+                    if(search == null || search.isBlank()) { return true; }
+                    String value = search.toLowerCase();
+                    return order.getCustomerName().toLowerCase().contains(value)
+                            || order.getPhone().contains(value)
+                             || order.getEmail().toLowerCase().contains(value);
+                })
+                .filter(order -> {
+                    if (days == null) return true;
+                    LocalDateTime limit = LocalDateTime.now().minusDays(days);
+                    return order.getCreatedAt().isAfter(limit);
+                })
+                .map(OrderTransformer::orderToOrderResponse)
+                .toList();
+    }
+
+    @Transactional
+    public OrderResponse updateStatus(String id, OrderStatus status) {
+        OrderEntity order = validation.findOrderById_ReturnOrder(id);
+
+        order.setStatus(status);
+        return OrderTransformer.orderToOrderResponse(order);
+    }
+
+    public DashboardResponse getDashboard() {
+
+        LocalDateTime startOfMonth =
+                LocalDate.now()
+                        .withDayOfMonth(1)
+                        .atStartOfDay();
+
+        List<OrderEntity> orderEntityList =
+                orderEntityDao.findAll()
+                        .stream()
+                        .filter(order -> !order.getCreatedAt().isBefore(startOfMonth))
+                        .toList();
+
+        DashboardResponse dashboardResponse = new DashboardResponse();
+
+        //Total Orders
+        dashboardResponse.setTotalOrders((long) orderEntityList.size());
+
+        //Total Revenue
+        BigDecimal totalRevenue = BigDecimal.ZERO;
+        for(OrderEntity orderEntity : orderEntityList){
+            totalRevenue = totalRevenue.add(orderEntity.getTotalAmount());
+        }
+
+        dashboardResponse.setTotalRevenue(totalRevenue);
+
+        //Orders per Status
+        Map<OrderStatus,Long> statusCount = new HashMap<>();
+
+        long RECEIVED  = 0;
+        long PROCESSING = 0;
+        long READY = 0;
+        long DELIVERED = 0;
+
+        for(OrderEntity orderEntity : orderEntityList) {
+            if(orderEntity.getStatus()==OrderStatus.DELIVERED) DELIVERED++;
+            if(orderEntity.getStatus()==OrderStatus.PROCESSING) PROCESSING++;
+            if(orderEntity.getStatus()==OrderStatus.RECEIVED) RECEIVED++;
+            if(orderEntity.getStatus()==OrderStatus.READY) READY++;
+        }
+
+        statusCount.put(OrderStatus.PROCESSING,PROCESSING);
+        statusCount.put(OrderStatus.DELIVERED,DELIVERED);
+        statusCount.put(OrderStatus.RECEIVED,RECEIVED);
+        statusCount.put(OrderStatus.READY,READY);
+
+        dashboardResponse.setOrdersPerStatus(statusCount);
+
+        return dashboardResponse;
+    }
+
+    public List<OrderResponse> getRecentOrders(int page, int size) {
+
+        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+        Page<OrderEntity> orderEntityPage = orderEntityDao.findAll(pageable);
+
+        return orderEntityPage.getContent()
+                .stream()
+                .map(OrderTransformer::orderToOrderResponse)
+                .toList();
+
+    }
+
+    public void deleteOrder(String orderId) {
+       OrderEntity order = validation.findOrderById_ReturnOrder(orderId);
+       orderEntityDao.delete(order);
     }
 }

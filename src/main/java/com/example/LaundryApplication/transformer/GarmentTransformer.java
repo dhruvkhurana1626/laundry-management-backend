@@ -2,13 +2,10 @@ package com.example.LaundryApplication.transformer;
 
 import com.example.LaundryApplication.dto.request.GarmentRequest;
 import com.example.LaundryApplication.dto.response.GarmentResponse;
-import com.example.LaundryApplication.enums.GarmentType;
 import com.example.LaundryApplication.model.Garment;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
-import jakarta.validation.constraints.NotNull;
 
-import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
