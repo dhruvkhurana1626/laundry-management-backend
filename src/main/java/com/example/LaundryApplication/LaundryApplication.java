@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 
 @SpringBootApplication
 @ControllerAdvice
-public class LaundryApplication {
+public class  LaundryApplication {
 
 	public static void main(String[] args) {
 		SpringApplication.run(LaundryApplication.class, args);

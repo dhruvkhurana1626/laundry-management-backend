@@ -11,6 +11,7 @@ import com.example.LaundryApplication.model.Garment;
 import com.example.LaundryApplication.model.OrderEntity;
 import com.example.LaundryApplication.transformer.GarmentTransformer;
 import com.example.LaundryApplication.transformer.OrderTransformer;
+import com.example.LaundryApplication.utility.Email;
 import com.example.LaundryApplication.utility.Validation;
 import jakarta.persistence.criteria.Order;
 import jakarta.transaction.Transactional;
@@ -35,6 +36,7 @@ public class OrderService {
 
     private final Validation validation;
     private final OrderEntityDao orderEntityDao;
+    private final Email email;
 
     @Transactional
     public OrderResponse createOrder(@Valid OrderRequest orderRequest){
@@ -126,6 +128,8 @@ public class OrderService {
     public OrderResponse updateStatus(String id, OrderStatus status) {
         OrderEntity order = validation.findOrderById_ReturnOrder(id);
 
+        if(status==OrderStatus.READY) email.sendEmailWhenOrderReady(order);
+        if(status==OrderStatus.DELIVERED) email.sendEmailWhenOrderDelivered(order);
         order.setStatus(status);
         return OrderTransformer.orderToOrderResponse(order);
     }
