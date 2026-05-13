@@ -122,7 +122,7 @@ public class Email {
 
             javaMailSender.send(mimeMessage);
         } catch (RuntimeException e) {
-            throw new BusinessException("Failed to send registration email");
+            throw new BusinessException("Failed to Order is Ready Notification email");
         }
 
     }
@@ -228,7 +228,7 @@ public class Email {
 
             javaMailSender.send(mimeMessage);
         } catch (RuntimeException e) {
-            throw new BusinessException("Failed to send registration email");
+            throw new BusinessException("Failed to Order is Ready Deleivered email");
         }
     }
 
