@@ -29,6 +29,7 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
 @Service
 @RequiredArgsConstructor
@@ -89,12 +90,12 @@ public class OrderService {
     private BigDecimal getPrice(GarmentType garmentType){
         switch (garmentType){
             case SHIRT: return BigDecimal.valueOf(100);
-            case PANT: return BigDecimal.valueOf(120);
-            case JEANS: return BigDecimal.valueOf(80);
-            case COAT_PANT: return BigDecimal.valueOf(1000);
-            case BLAZER: return BigDecimal.valueOf(600);
-            case SAREE: return BigDecimal.valueOf(1500);
-            case LEHENGA: return BigDecimal.valueOf(2500);
+            case PANT: return BigDecimal.valueOf(100);
+            case JEANS: return BigDecimal.valueOf(150);
+            case COAT_PANT: return BigDecimal.valueOf(500);
+            case BLAZER: return BigDecimal.valueOf(300);
+            case SAREE: return BigDecimal.valueOf(1000);
+            case LEHENGA: return BigDecimal.valueOf(2000);
             default: return BigDecimal.valueOf(500);
         }
     }
@@ -128,8 +129,18 @@ public class OrderService {
     public OrderResponse updateStatus(String id, OrderStatus status) {
         OrderEntity order = validation.findOrderById_ReturnOrder(id);
 
-        if(status==OrderStatus.READY) email.sendEmailWhenOrderReady(order);
-        if(status==OrderStatus.DELIVERED) email.sendEmailWhenOrderDelivered(order);
+        if(status==OrderStatus.READY){
+            CompletableFuture.runAsync(()->{
+                email.sendEmailWhenOrderReady(order);
+            });
+        }
+
+        if(status==OrderStatus.DELIVERED){
+            CompletableFuture.runAsync(()->{
+                email.sendEmailWhenOrderDelivered(order);
+            });
+        }
+
         order.setStatus(status);
         return OrderTransformer.orderToOrderResponse(order);
     }
