@@ -130,15 +130,11 @@ public class OrderService {
         OrderEntity order = validation.findOrderById_ReturnOrder(id);
 
         if(status==OrderStatus.READY){
-            CompletableFuture.runAsync(()->{
                 email.sendEmailWhenOrderReady(order);
-            });
         }
 
         if(status==OrderStatus.DELIVERED){
-            CompletableFuture.runAsync(()->{
                 email.sendEmailWhenOrderDelivered(order);
-            });
         }
 
         order.setStatus(status);
