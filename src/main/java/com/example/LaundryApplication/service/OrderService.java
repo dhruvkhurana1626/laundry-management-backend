@@ -135,7 +135,7 @@ public class OrderService {
             });
         }
 
-        if(status==OrderStatus.DELIVERED){
+         if(status==OrderStatus.DELIVERED){
             CompletableFuture.runAsync(()->{
                 email.sendEmailWhenOrderDelivered(order);
             });
