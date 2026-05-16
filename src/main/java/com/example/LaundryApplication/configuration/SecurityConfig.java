@@ -28,6 +28,7 @@ public class SecurityConfig {
                 .csrf(csrf->csrf.disable())
                 .cors(Customizer.withDefaults())
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/api/v1/health/**").permitAll()
                         .requestMatchers("/api/v1/dashboard/**").hasRole("ADMIN")
                         .requestMatchers("/api/v1/orders/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
