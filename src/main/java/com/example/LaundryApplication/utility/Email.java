@@ -24,7 +24,7 @@ public class Email {
     public void sendEmailWhenOrderReady(OrderEntity order){
         String to = order.getEmail();
 
-        String orderId = order.getId();
+        Integer orderId = order.getId();
         String customerName = order.getCustomerName();
         String phoneNumber = order.getPhone();
         BigDecimal totalAmount = order.getTotalAmount();
@@ -131,7 +131,7 @@ public class Email {
     public void sendEmailWhenOrderDelivered(OrderEntity order){
         String to = order.getEmail();
 
-        String orderId = order.getId();
+        Integer orderId = order.getId();
         String customerName = order.getCustomerName();
         String phoneNumber = order.getPhone();
         BigDecimal totalAmount = order.getTotalAmount();

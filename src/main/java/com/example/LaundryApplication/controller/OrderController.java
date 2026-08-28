@@ -36,6 +36,8 @@ public class OrderController {
     @GetMapping
     public List<OrderResponse> getOrders(
             @RequestParam(required = false)
+            Integer id,
+            @RequestParam(required = false)
             OrderStatus status,
             @RequestParam(required = false)
             String search,
@@ -44,19 +46,19 @@ public class OrderController {
             @RequestParam(defaultValue = "0")
             int page
     ) {
-        return orderService.getOrders(status, search, days, page);
+        return orderService.getOrders(id,status, search, days, page);
     }
 
     @PutMapping("/{id}/status")
     public OrderResponse updateStatus(
-            @PathVariable String id,
+            @PathVariable Integer id,
             @RequestParam OrderStatus status
     ) {
         return orderService.updateStatus(id, status);
     }
 
     @DeleteMapping("/{orderId}")
-    public String deleteOrder(@PathVariable String orderId){
+    public String deleteOrder(@PathVariable Integer orderId){
         orderService.deleteOrder(orderId);
         return "Order Deleted SuccessFully";
     }
