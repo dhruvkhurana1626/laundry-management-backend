@@ -5,6 +5,8 @@ import com.example.LaundryApplication.configuration.dto.request.RegisterRequest;
 import com.example.LaundryApplication.ecxeption.BusinessException;
 import com.example.LaundryApplication.enums.Role;
 import com.example.LaundryApplication.model.User;
+import com.example.LaundryApplication.service.PricingService;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -17,8 +19,10 @@ public class AuthService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
+    private final PricingService pricingService;
 
 
+    @Transactional
     public void register(RegisterRequest request) {
 
         if(userRepository.existsByEmail(request.getEmail())){
@@ -33,7 +37,9 @@ public class AuthService {
         //Public registration = Seller
         user.setRole(Role.SELLER);
 
-        userRepository.save(user);
+        User savedUser = userRepository.save(user);
+
+        pricingService.createDefaultPricing(savedUser);
 
     }
 }

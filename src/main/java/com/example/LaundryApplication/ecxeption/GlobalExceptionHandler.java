@@ -4,6 +4,7 @@ import lombok.Getter;
 import lombok.Setter;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -13,6 +14,21 @@ import java.time.LocalDateTime;
 @Setter
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<ErrorResponse> handleMethodArgumentNotValidException(MethodArgumentNotValidException ex){
+
+        return buildErrorResponse(ex.getMessage(),HttpStatus.NOT_ACCEPTABLE);
+
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ErrorResponse> handleGenericException(Exception ex){
+
+        return buildErrorResponse(ex.getMessage(),HttpStatus.INTERNAL_SERVER_ERROR);
+
+    }
 
 
     @ExceptionHandler (ResourceNotFoundException.class)
@@ -31,7 +47,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler (BusinessException.class)
     public ResponseEntity<ErrorResponse> handleBusiness(Exception ex) {
 
-        return buildErrorResponse(ex.getMessage(), HttpStatus.NOT_ACCEPTABLE);
+        return buildErrorResponse(ex.getMessage(), HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler (InvalidRequestException.class)

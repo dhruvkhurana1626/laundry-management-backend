@@ -29,6 +29,7 @@ public class SecurityConfig {
                 .cors(Customizer.withDefaults())
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/v1/health/**").permitAll()
+                        .requestMatchers("/api/v1/pricing/**").hasRole("SELLER")
                         .requestMatchers("/api/v1/dashboard/**").hasRole("SELLER")
                         .requestMatchers("/api/v1/order/**").hasRole("SELLER")
                         .requestMatchers("/api/v1/auth/**").permitAll()

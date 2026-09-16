@@ -33,4 +33,7 @@ public class User {
     @OneToMany(mappedBy = "user")
     private List<OrderEntity> orders;
 
+    @OneToMany
+    private List<Pricing> pricingList;
+
 }

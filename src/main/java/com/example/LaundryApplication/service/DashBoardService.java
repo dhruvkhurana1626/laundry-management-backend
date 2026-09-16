@@ -52,21 +52,15 @@ public class DashBoardService {
         Map<OrderStatus,Long> statusCount = new HashMap<>();
 
         long RECEIVED  = 0;
-        long PROCESSING = 0;
-        long READY = 0;
         long DELIVERED = 0;
 
         for(OrderEntity orderEntity : orderEntityList) {
             if(orderEntity.getStatus()==OrderStatus.DELIVERED) DELIVERED++;
-            if(orderEntity.getStatus()==OrderStatus.PROCESSING) PROCESSING++;
             if(orderEntity.getStatus()==OrderStatus.RECEIVED) RECEIVED++;
-            if(orderEntity.getStatus()==OrderStatus.READY) READY++;
         }
 
-        statusCount.put(OrderStatus.PROCESSING,PROCESSING);
         statusCount.put(OrderStatus.DELIVERED,DELIVERED);
         statusCount.put(OrderStatus.RECEIVED,RECEIVED);
-        statusCount.put(OrderStatus.READY,READY);
 
         dashboardResponse.setOrdersPerStatus(statusCount);
 

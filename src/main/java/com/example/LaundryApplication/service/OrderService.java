@@ -5,7 +5,6 @@ import com.example.LaundryApplication.dto.request.OrderRequest;
 import com.example.LaundryApplication.dto.response.OrderResponse;
 import com.example.LaundryApplication.ecxeption.BusinessException;
 import com.example.LaundryApplication.ecxeption.ResourceNotFoundException;
-import com.example.LaundryApplication.enums.GarmentType;
 import com.example.LaundryApplication.enums.OrderStatus;
 import com.example.LaundryApplication.model.Garment;
 import com.example.LaundryApplication.model.OrderEntity;
@@ -17,6 +16,7 @@ import com.example.LaundryApplication.utility.Validation;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -28,6 +28,7 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class OrderService {
@@ -35,6 +36,7 @@ public class OrderService {
     private final Validation validation;
     private final OrderEntityDao orderEntityDao;
     private final Email email;
+    private final PricingService pricingService;
 
     @Transactional
     public OrderResponse createOrder(@Valid OrderRequest orderRequest){
@@ -59,7 +61,7 @@ public class OrderService {
             garment.setOrder(orderEntity);
 
             // Calculation price per Item
-            BigDecimal pricePerItem = getPrice(garment.getType());
+            BigDecimal pricePerItem = pricingService.getPrice(garment.getType());
 
             // Setting price per Item to garment
             garment.setPricePerItem(pricePerItem);
@@ -82,20 +84,6 @@ public class OrderService {
 
         // 7- Return Order Response
         return OrderTransformer.orderToOrderResponse(savedOrder);
-    }
-
-    //setting price per item
-    private BigDecimal getPrice(GarmentType garmentType){
-        switch (garmentType){
-            case SHIRT: return BigDecimal.valueOf(100);
-            case PANT: return BigDecimal.valueOf(100);
-            case JEANS: return BigDecimal.valueOf(150);
-            case COAT_PANT: return BigDecimal.valueOf(500);
-            case BLAZER: return BigDecimal.valueOf(300);
-            case SAREE: return BigDecimal.valueOf(1000);
-            case LEHENGA: return BigDecimal.valueOf(2000);
-            default: return BigDecimal.valueOf(500);
-        }
     }
 
     public Page<OrderResponse> getOrders(
@@ -127,16 +115,19 @@ public class OrderService {
             throw new BusinessException("You don't have permission to make changes");
         }
 
-        if(status==OrderStatus.READY){
-            CompletableFuture.runAsync(()->{
-                email.sendEmailWhenOrderReady(order);
-            });
+        if (order.getStatus() == OrderStatus.DELIVERED) {
+            throw new BusinessException(
+                    "Delivered order status cannot be changed"
+            );
         }
 
          if(status==OrderStatus.DELIVERED){
-            CompletableFuture.runAsync(()->{
-                email.sendEmailWhenOrderDelivered(order);
-            });
+             CompletableFuture.runAsync(() -> {
+                 email.sendEmailWhenOrderDelivered(order);
+             }).exceptionally(ex -> {
+                 log.error("Failed to send DELIVERED email for order {}", order.getId(), ex);
+                 return null;
+             });
         }
 
         order.setStatus(status);
@@ -162,7 +153,7 @@ public class OrderService {
     public void deleteOrder(Integer orderId) {
        OrderEntity order = validation.findOrderById_ReturnOrder(orderId);
 
-       if(order.getStatus()==OrderStatus.READY || order.getStatus()==OrderStatus.DELIVERED){
+       if(order.getStatus()==OrderStatus.DELIVERED){
            throw new BusinessException("You cannot delete this order");
        }
 
