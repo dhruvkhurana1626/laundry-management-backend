@@ -4,6 +4,7 @@ import com.example.LaundryApplication.dao.OrderEntityDao;
 import com.example.LaundryApplication.dto.response.DashboardResponse;
 import com.example.LaundryApplication.enums.OrderStatus;
 import com.example.LaundryApplication.model.OrderEntity;
+import com.example.LaundryApplication.utility.Validation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -19,6 +20,7 @@ import java.util.Map;
 public class DashBoardService {
 
     private final OrderEntityDao orderEntityDao;
+    private final Validation validation;
 
     public DashboardResponse getDashboard() {
 
@@ -28,7 +30,7 @@ public class DashBoardService {
                         .atStartOfDay();
 
         List<OrderEntity> orderEntityList =
-                orderEntityDao.findAll()
+                orderEntityDao.findByUserId(validation.getCurrentUser().getId())
                         .stream()
                         .filter(order -> !order.getCreatedAt().isBefore(startOfMonth))
                         .toList();

@@ -14,7 +14,8 @@ public class OrderSpecification {
             Integer id,
             OrderStatus status,
             String search,
-            Integer days) {
+            Integer days,
+            Long userId) {
 
         return (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
@@ -43,6 +44,13 @@ public class OrderSpecification {
             if (days != null) {
                 LocalDateTime limit = LocalDateTime.now().minusDays(days);
                 predicates.add(cb.greaterThan(root.get("createdAt"), limit));
+            }
+
+            // Ownership filter
+            if (userId != null) {
+                predicates.add(
+                        cb.equal(root.get("user").get("id"), userId)
+                );
             }
 
             return cb.and(predicates.toArray(new Predicate[0]));

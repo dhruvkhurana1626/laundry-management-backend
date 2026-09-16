@@ -25,7 +25,6 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
@@ -76,6 +75,7 @@ public class OrderService {
         orderEntity.setTotalAmount(totalAmount);
         orderEntity.setGarmentList(garmentList);
         orderEntity.setStatus(OrderStatus.RECEIVED);
+        orderEntity.setUser(validation.getCurrentUser());
 
         // 6- Saving Order
         OrderEntity savedOrder = orderEntityDao.save(orderEntity);
@@ -108,7 +108,7 @@ public class OrderService {
         Pageable pageable = PageRequest.of(page, 10, Sort.by("createdAt").descending());
 
         // Build specification containing DB-level filters
-        Specification<OrderEntity> spec = OrderSpecification.buildFilterSpec(id, status, search, days);
+        Specification<OrderEntity> spec = OrderSpecification.buildFilterSpec(id, status, search, days, validation.getCurrentUser().getId());
 
         // Filter and paginate inside the DB execution
         Page<OrderEntity> orderEntityPage = orderEntityDao.findAll(spec, pageable);
@@ -123,6 +123,10 @@ public class OrderService {
                 .orElseThrow(()->
                         new ResourceNotFoundException("Order not found"));
 
+        if (!order.getUser().getId().equals(validation.getCurrentUser().getId())) {
+            throw new BusinessException("You don't have permission to make changes");
+        }
+
         if(status==OrderStatus.READY){
             CompletableFuture.runAsync(()->{
                 email.sendEmailWhenOrderReady(order);
@@ -136,14 +140,17 @@ public class OrderService {
         }
 
         order.setStatus(status);
-
         return OrderTransformer.orderToOrderResponse(order);
     }
 
     public List<OrderResponse> getRecentOrders(int page, int size) {
 
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
-        Page<OrderEntity> orderEntityPage = orderEntityDao.findAll(pageable);
+
+        Long userId = validation.getCurrentUser().getId();
+
+        Page<OrderEntity> orderEntityPage =
+                orderEntityDao.findByUserId(userId, pageable);
 
         return orderEntityPage.getContent()
                 .stream()
@@ -154,6 +161,15 @@ public class OrderService {
 
     public void deleteOrder(Integer orderId) {
        OrderEntity order = validation.findOrderById_ReturnOrder(orderId);
+
+       if(order.getStatus()==OrderStatus.READY || order.getStatus()==OrderStatus.DELIVERED){
+           throw new BusinessException("You cannot delete this order");
+       }
+
+        if (!order.getUser().getId().equals(validation.getCurrentUser().getId())) {
+            throw new BusinessException("You don't have permission to delete this Order");
+        }
+
        orderEntityDao.delete(order);
     }
 }
