@@ -17,7 +17,8 @@ public class Validation {
     private final OrderEntityDao orderEntityDao;
 
     public OrderEntity findOrderById_ReturnOrder(Integer id) {
-        return orderEntityDao.findById(id)
+        return orderEntityDao.findById(Long.valueOf(id))
                 .orElseThrow(()-> new ResourceNotFoundException("Order not found"));
     }
+
 }

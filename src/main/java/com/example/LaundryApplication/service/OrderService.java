@@ -12,6 +12,7 @@ import com.example.LaundryApplication.model.OrderEntity;
 import com.example.LaundryApplication.transformer.GarmentTransformer;
 import com.example.LaundryApplication.transformer.OrderTransformer;
 import com.example.LaundryApplication.utility.Email;
+import com.example.LaundryApplication.utility.OrderSpecification;
 import com.example.LaundryApplication.utility.Validation;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
@@ -20,6 +21,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -96,57 +98,23 @@ public class OrderService {
         }
     }
 
-    public List<OrderResponse> getOrders(
+    public Page<OrderResponse> getOrders(
             Integer id,
             OrderStatus status,
             String search,
             Integer days,
             int page) {
 
-        Pageable pageable =
-                PageRequest.of(page, 10, Sort.by("createdAt").descending());
+        Pageable pageable = PageRequest.of(page, 10, Sort.by("createdAt").descending());
 
-        Page<OrderEntity> orderEntityPage =
-                orderEntityDao.findAll(pageable);
+        // Build specification containing DB-level filters
+        Specification<OrderEntity> spec = OrderSpecification.buildFilterSpec(id, status, search, days);
 
-        List<OrderEntity> orders = orderEntityPage.getContent();
+        // Filter and paginate inside the DB execution
+        Page<OrderEntity> orderEntityPage = orderEntityDao.findAll(spec, pageable);
 
-        return orders.stream()
-                .filter(order -> id == null || order.getId().equals(id))
-
-                .filter(order ->
-                        status == null ||
-                                order.getStatus() == status)
-
-                .filter(order -> {
-                    if (search == null || search.isBlank()) {
-                        return true;
-                    }
-
-                    String value = search.toLowerCase();
-
-                    return order.getCustomerName()
-                            .toLowerCase()
-                            .contains(value)
-                            || order.getPhone().contains(value)
-                            || order.getEmail()
-                            .toLowerCase()
-                            .contains(value);
-                })
-
-                .filter(order -> {
-                    if (days == null) {
-                        return true;
-                    }
-
-                    LocalDateTime limit =
-                            LocalDateTime.now().minusDays(days);
-
-                    return order.getCreatedAt().isAfter(limit);
-                })
-
-                .map(OrderTransformer::orderToOrderResponse)
-                .toList();
+        // Map entity page directly to DTO page
+        return orderEntityPage.map(OrderTransformer::orderToOrderResponse);
     }
 
     @Transactional

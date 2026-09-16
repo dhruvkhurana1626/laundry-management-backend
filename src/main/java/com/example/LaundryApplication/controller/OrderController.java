@@ -46,7 +46,7 @@ public class OrderController {
             @RequestParam(defaultValue = "0")
             int page
     ) {
-        return orderService.getOrders(id,status, search, days, page);
+        return orderService.getOrders(id,status, search, days, page).getContent();
     }
 
     @PutMapping("/{id}/status")
