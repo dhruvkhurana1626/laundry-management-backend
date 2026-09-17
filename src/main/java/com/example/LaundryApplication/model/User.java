@@ -33,7 +33,7 @@ public class User {
     @OneToMany(mappedBy = "user")
     private List<OrderEntity> orders;
 
-    @OneToMany
+    @OneToMany(mappedBy = "user")
     private List<Pricing> pricingList;
 
 }

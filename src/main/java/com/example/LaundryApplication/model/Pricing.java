@@ -29,7 +29,7 @@ public class Pricing {
     private User user;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false)
     private GarmentType garmentType;
 
     @Column(nullable = false)

@@ -2,6 +2,7 @@ package com.example.LaundryApplication.configuration.controller;
 
 import com.example.LaundryApplication.configuration.dto.request.RegisterRequest;
 import com.example.LaundryApplication.configuration.service.AuthService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -18,7 +19,7 @@ public class AuthController {
 
     @PostMapping("/register")
     public ResponseEntity<String> register(
-            @RequestBody RegisterRequest request) {
+            @RequestBody @Valid RegisterRequest request) {
 
         authService.register(request);
 

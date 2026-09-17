@@ -7,6 +7,7 @@ import jakarta.persistence.criteria.Predicate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class OrderSpecification {
 
@@ -17,13 +18,13 @@ public class OrderSpecification {
             Integer days,
             Long userId) {
 
+        Objects.requireNonNull(userId, "userId is required");
+
         return (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
 
             // 1. Filter by ID
-            if (id != null) {
-                predicates.add(cb.equal(root.get("id"), id));
-            }
+            predicates.add(cb.equal(root.get("user").get("id"), id));
 
             // 2. Filter by Status
             if (status != null) {

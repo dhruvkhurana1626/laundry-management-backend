@@ -21,7 +21,6 @@ public class PricingService {
 
     private final PricingRepository pricingRepository;
     private final Validation validation;
-    private final PricingTransformer pricingTransformer;
 
     public BigDecimal getPrice(GarmentType garmentType) {
 
@@ -81,8 +80,7 @@ public class PricingService {
         Long userId = validation.getCurrentUser().getId();
         List<Pricing> pricingList = pricingRepository.findByUserId(userId);
 
-        return pricingTransformer.pricingListToPricingResponseList(pricingList);
-
+        return PricingTransformer.pricingListToPricingResponseList(pricingList);
 
     }
 
