@@ -32,7 +32,12 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/pricing/**").hasRole("SELLER")
                         .requestMatchers("/api/v1/dashboard/**").hasRole("SELLER")
                         .requestMatchers("/api/v1/order/**").hasRole("SELLER")
-                        .requestMatchers("/api/v1/auth/**").permitAll()
+                        .requestMatchers("/api/v1/auth/change-password").hasRole("SELLER")
+                        .requestMatchers(
+                                "/api/v1/auth/register",
+                                "/api/v1/auth/forgot-password",
+                                "/api/v1/auth/reset-password"
+                        ).permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers(
                                 "/swagger-ui/**",

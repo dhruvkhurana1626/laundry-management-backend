@@ -38,4 +38,10 @@ public class Validation {
 
     }
 
+    public User findUserByEmail(String email){
+        return userRepository.findByEmail(email)
+                .orElseThrow(()-> new ResourceNotFoundException("No user found with this Email")
+                        );
+    }
+
 }
