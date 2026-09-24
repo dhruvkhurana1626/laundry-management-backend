@@ -9,6 +9,9 @@ import com.example.LaundryApplication.model.User;
 import com.example.LaundryApplication.transformer.PricingTransformer;
 import com.example.LaundryApplication.utility.Validation;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -24,7 +27,9 @@ public class PricingService {
 
     public BigDecimal getPrice(GarmentType garmentType) {
 
-        return pricingRepository.findByGarmentType(garmentType)
+        User user = validation.getCurrentUser();
+
+        return pricingRepository.findByGarmentTypeAndUser(garmentType,user)
                 .map(Pricing::getPrice)
                 .orElseThrow(() ->
                         new BusinessException(
