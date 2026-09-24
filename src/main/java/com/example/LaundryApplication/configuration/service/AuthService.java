@@ -1,10 +1,8 @@
 package com.example.LaundryApplication.configuration.service;
 
 import com.example.LaundryApplication.configuration.dao.PasswordResetTokenRepository;
-import com.example.LaundryApplication.configuration.dto.request.ChangePasswordRequest;
-import com.example.LaundryApplication.configuration.dto.request.ForgotPasswordRequest;
-import com.example.LaundryApplication.configuration.dto.request.RegisterRequest;
-import com.example.LaundryApplication.configuration.dto.request.ResetPasswordRequest;
+import com.example.LaundryApplication.configuration.dto.request.*;
+import com.example.LaundryApplication.configuration.dto.response.LoginResponse;
 import com.example.LaundryApplication.configuration.model.PasswordResetToken;
 import com.example.LaundryApplication.dao.UserRepository;
 import com.example.LaundryApplication.ecxeption.BusinessException;
@@ -19,6 +17,8 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -38,6 +38,7 @@ public class AuthService {
     private final PricingService pricingService;
     private final Validation validation;
     private final Email email;
+    private final JwtService jwtService;
 
 
     @Transactional
@@ -136,5 +137,16 @@ public class AuthService {
         userRepository.save(user);
 
         passwordResetTokenRepository.delete(resetToken);
+    }
+
+    public LoginResponse login(@Valid LoginRequest request) {
+
+        Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
+        );
+
+        String token = jwtService.generateToken(authentication.getName());
+        return new LoginResponse(token);
+
     }
 }

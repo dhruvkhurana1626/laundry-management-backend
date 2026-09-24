@@ -1,12 +1,9 @@
 package com.example.LaundryApplication.configuration.controller;
 
-import com.example.LaundryApplication.configuration.dto.request.ChangePasswordRequest;
-import com.example.LaundryApplication.configuration.dto.request.ForgotPasswordRequest;
-import com.example.LaundryApplication.configuration.dto.request.RegisterRequest;
-import com.example.LaundryApplication.configuration.dto.request.ResetPasswordRequest;
+import com.example.LaundryApplication.configuration.dto.request.*;
+import com.example.LaundryApplication.configuration.dto.response.LoginResponse;
 import com.example.LaundryApplication.configuration.service.AuthService;
 import com.example.LaundryApplication.configuration.service.RateLimitService;
-import jakarta.mail.MessagingException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +18,11 @@ public class AuthController {
 
     private final AuthService authService;
     private final RateLimitService rateLimitService;
+
+    @PostMapping("/login")
+    public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest request) {
+        return ResponseEntity.ok(authService.login(request));
+    }
 
     @PostMapping("/register")
     public ResponseEntity<String> register(
