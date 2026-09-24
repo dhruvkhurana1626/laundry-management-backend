@@ -1,4 +1,6 @@
-package com.example.LaundryApplication.configuration.controller;
+package com.example.LaundryApplication.ecxeption;
 
-public class TooManyRequestsException {
+public class TooManyRequestsException extends RuntimeException {
+    public TooManyRequestsException(String s) {
+    }
 }

@@ -4,6 +4,7 @@ import com.example.LaundryApplication.configuration.dto.request.*;
 import com.example.LaundryApplication.configuration.dto.response.LoginResponse;
 import com.example.LaundryApplication.configuration.service.AuthService;
 import com.example.LaundryApplication.configuration.service.RateLimitService;
+import com.example.LaundryApplication.ecxeption.TooManyRequestsException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -20,7 +21,18 @@ public class AuthController {
     private final RateLimitService rateLimitService;
 
     @PostMapping("/login")
-    public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest request) {
+    public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest request,
+                                               HttpServletRequest httpServletRequest) {
+
+        String ip = httpServletRequest.getRemoteAddr();
+        String email = request.getEmail().toLowerCase().trim();
+        String rateLimitKey = "login:" + email + ":" + ip;
+
+        //Ratelimiting added
+        if (!rateLimitService.isAllowed(rateLimitKey)) {
+            throw new TooManyRequestsException("Too many login attempts. Please try again in 15 minutes.");
+        }
+
         return ResponseEntity.ok(authService.login(request));
     }
 
@@ -48,12 +60,12 @@ public class AuthController {
             HttpServletRequest httpServletRequest) {
 
         String ip = httpServletRequest.getRemoteAddr();
+        String email = request.getEmail().toLowerCase().trim();
+        String rateLimitKey = "login:" + email + ":" + ip;
 
         //Ratelimiting added
-        if (!rateLimitService.isAllowed("forgot:" + ip)) {
-            return ResponseEntity
-                    .status(HttpStatus.TOO_MANY_REQUESTS)
-                    .body("Too many requests. Please try again later.");
+        if (!rateLimitService.isAllowed(rateLimitKey)) {
+            throw new TooManyRequestsException("Too many login attempts. Please try again in 15 minutes.");
         }
 
         authService.forgotPassword(request);
