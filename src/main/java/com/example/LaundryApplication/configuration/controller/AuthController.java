@@ -61,7 +61,7 @@ public class AuthController {
 
         String ip = httpServletRequest.getRemoteAddr();
         String email = request.getEmail().toLowerCase().trim();
-        String rateLimitKey = "login:" + email + ":" + ip;
+        String rateLimitKey = "forgot:" + email + ":" + ip;
 
         //Ratelimiting added
         if (!rateLimitService.isAllowed(rateLimitKey)) {

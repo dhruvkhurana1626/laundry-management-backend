@@ -16,6 +16,7 @@ import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.webmvc.autoconfigure.WebMvcProperties;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -23,6 +24,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
@@ -86,8 +88,10 @@ public class AuthService {
     @Transactional
     public void forgotPassword(@Valid ForgotPasswordRequest request) {
 
-        User user = validation.findUserByEmail(request.getEmail());
+        Optional<User> findUser = userRepository.findByEmail(request.getEmail());
+        if(findUser.isEmpty()) return; //Simply return same response
 
+        User user = findUser.get();
         String token = UUID.randomUUID().toString();
 
         PasswordResetToken passwordResetToken = passwordResetTokenRepository.findByUserId(user.getId())
