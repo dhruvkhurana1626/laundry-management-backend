@@ -20,6 +20,7 @@ public class AuthController {
     private final AuthService authService;
     private final RateLimitService rateLimitService;
 
+    //User Login nd it will return both tokens - Access token & Refresh Token
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest request,
                                                HttpServletRequest httpServletRequest) {
@@ -36,6 +37,27 @@ public class AuthController {
         return ResponseEntity.ok(authService.login(request));
     }
 
+    //User logout nd it will delete the Refresh Token
+    @PostMapping("/logout")
+    public ResponseEntity<String> logout(
+            @Valid @RequestBody RefreshTokenRequest request) {
+
+        authService.logout(request.getRefreshToken());
+
+        return ResponseEntity.ok("Logged out successfully");
+    }
+
+    //Refresh token endpoint that will take Refresh Token as input
+    //will return both the refresh token & new Access token
+    @PostMapping("/refresh")
+    public ResponseEntity<LoginResponse> refresh(
+            @Valid @RequestBody RefreshTokenRequest request) {
+
+        return ResponseEntity.ok(
+                authService.refreshAccessToken(request)
+        );
+    }
+
     @PostMapping("/register")
     public ResponseEntity<String> register(
             @RequestBody @Valid RegisterRequest request) {
@@ -45,6 +67,7 @@ public class AuthController {
         return ResponseEntity.ok("Seller registered successfully");
     }
 
+    //Only the logged in user can hit this api
     @PutMapping("/change-password")
     public ResponseEntity<String> changePassword(
             @RequestBody @Valid ChangePasswordRequest changePasswordRequest) {

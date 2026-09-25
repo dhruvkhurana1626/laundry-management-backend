@@ -23,8 +23,10 @@ public class OrderSpecification {
         return (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
 
-            // 1. Filter by ID
-            predicates.add(cb.equal(root.get("user").get("id"), id));
+            // 1. Filter by Order ID
+            if (id != null) {
+                predicates.add(cb.equal(root.get("id"), id));
+            }
 
             // 2. Filter by Status
             if (status != null) {

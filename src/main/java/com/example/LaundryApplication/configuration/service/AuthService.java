@@ -1,9 +1,11 @@
 package com.example.LaundryApplication.configuration.service;
 
 import com.example.LaundryApplication.configuration.dao.PasswordResetTokenRepository;
+import com.example.LaundryApplication.configuration.dao.RefreshTokenRepository;
 import com.example.LaundryApplication.configuration.dto.request.*;
 import com.example.LaundryApplication.configuration.dto.response.LoginResponse;
 import com.example.LaundryApplication.configuration.model.PasswordResetToken;
+import com.example.LaundryApplication.configuration.model.RefreshToken;
 import com.example.LaundryApplication.dao.UserRepository;
 import com.example.LaundryApplication.ecxeption.BusinessException;
 import com.example.LaundryApplication.ecxeption.InvalidRequestException;
@@ -14,9 +16,11 @@ import com.example.LaundryApplication.utility.Email;
 import com.example.LaundryApplication.utility.Validation;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.webmvc.autoconfigure.WebMvcProperties;
+import org.jspecify.annotations.Nullable;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -41,7 +45,10 @@ public class AuthService {
     private final Validation validation;
     private final Email email;
     private final JwtService jwtService;
+    private final RefreshTokenRepository refreshTokenRepository;
 
+    @Value("${jwt.refresh-expiration}")
+    private long refreshExpiration;
 
     @Transactional
     public void register(RegisterRequest request) {
@@ -149,8 +156,51 @@ public class AuthService {
                 new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
         );
 
-        String token = jwtService.generateToken(authentication.getName());
-        return new LoginResponse(token);
+        User user = validation.findUserByEmail(authentication.getName());
+
+        String accessToken = jwtService.generateAccessToken(authentication.getName());
+        String refreshToken = jwtService.generateRefreshToken(authentication.getName());
+
+        RefreshToken refreshTokenEntity = refreshTokenRepository.findByUser(user)
+                .orElseGet(()-> {
+                    RefreshToken rT = new RefreshToken();
+                    rT.setUser(user);
+                    return rT;
+                });
+
+        refreshTokenEntity.setToken(refreshToken);
+        refreshTokenEntity.setExpiryDate(LocalDateTime.now().plusDays(refreshExpiration/1000));
+
+        refreshTokenRepository.save(refreshTokenEntity);
+
+        return new LoginResponse(accessToken,refreshToken);
+
+    }
+
+    public @Nullable LoginResponse refreshAccessToken(@Valid RefreshTokenRequest request) {
+
+        if(!jwtService.isRefreshToken(request.getRefreshToken())){
+            throw new BusinessException("Invalid Refresh Token");
+        }
+
+        RefreshToken refreshTokenEntity = validation.findByToken(request.getRefreshToken());
+        validation.isTokenNotExpired(refreshTokenEntity);
+
+        User user = refreshTokenEntity.getUser();
+
+        String newAccessToken = jwtService.generateAccessToken(user.getEmail());
+
+        return new LoginResponse(
+                newAccessToken,
+                refreshTokenEntity.getToken()
+        );
+
+    }
+
+    public void logout(@NotBlank(message = "Refresh token is required") String refreshToken) {
+
+        refreshTokenRepository.findByToken(refreshToken)
+                .ifPresent(refreshTokenRepository::delete);
 
     }
 }

@@ -8,6 +8,7 @@ import com.example.LaundryApplication.ecxeption.ResourceNotFoundException;
 import com.example.LaundryApplication.enums.OrderStatus;
 import com.example.LaundryApplication.model.Garment;
 import com.example.LaundryApplication.model.OrderEntity;
+import com.example.LaundryApplication.model.User;
 import com.example.LaundryApplication.transformer.GarmentTransformer;
 import com.example.LaundryApplication.transformer.OrderTransformer;
 import com.example.LaundryApplication.utility.Email;
@@ -95,8 +96,17 @@ public class OrderService {
 
         Pageable pageable = PageRequest.of(page, 10, Sort.by("createdAt").descending());
 
+        User user = validation.getCurrentUser();
+
+        System.out.println(user.getId());;
+        System.out.println(user.getEmail());
+
         // Build specification containing DB-level filters
-        Specification<OrderEntity> spec = OrderSpecification.buildFilterSpec(id, status, search, days, validation.getCurrentUser().getId());
+        Specification<OrderEntity> spec = OrderSpecification.buildFilterSpec(id,
+                status,
+                search,
+                days,
+                user.getId());
 
         // Filter and paginate inside the DB execution
         Page<OrderEntity> orderEntityPage = orderEntityDao.findAll(spec, pageable);

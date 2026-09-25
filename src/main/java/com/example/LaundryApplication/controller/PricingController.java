@@ -2,7 +2,6 @@ package com.example.LaundryApplication.controller;
 
 import com.example.LaundryApplication.dto.response.PricingResponse;
 import com.example.LaundryApplication.enums.GarmentType;
-import com.example.LaundryApplication.model.Pricing;
 import com.example.LaundryApplication.service.PricingService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
