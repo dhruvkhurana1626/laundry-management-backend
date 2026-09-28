@@ -23,6 +23,26 @@ public class User {
     @Column(nullable = false, unique = true)
     private String email;
 
+    @Column(unique = true)
+    private String businessName;
+
+    private String ownerName;
+
+    @Column(unique = true)
+    private String phone;
+
+    private String address;
+
+    private String city;
+
+    private String aboutBusiness;
+
+    private String panNumber;
+
+    private String gstNumber;
+
+    private String profileImageUrl;
+
     @Column(nullable = false)
     private String password;
 

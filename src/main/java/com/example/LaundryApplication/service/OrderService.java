@@ -98,9 +98,6 @@ public class OrderService {
 
         User user = validation.getCurrentUser();
 
-        System.out.println(user.getId());;
-        System.out.println(user.getEmail());
-
         // Build specification containing DB-level filters
         Specification<OrderEntity> spec = OrderSpecification.buildFilterSpec(id,
                 status,

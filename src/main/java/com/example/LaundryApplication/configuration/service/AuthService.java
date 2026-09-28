@@ -116,7 +116,7 @@ public class AuthService {
         passwordResetTokenRepository.save(passwordResetToken);
 
         //update this with frontend-url
-        String resetLink = "http://localhost:8080/api/v1/auth/reset-password?token=" + token;
+        String resetLink = "http://127.0.0.1:3000/reset-password.html?token=" + token;
 
         CompletableFuture.runAsync(()->{
             email.sendPasswordResetEmail(user.getEmail(),resetLink);

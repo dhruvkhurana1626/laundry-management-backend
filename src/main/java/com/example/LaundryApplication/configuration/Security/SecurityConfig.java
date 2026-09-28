@@ -42,6 +42,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/dashboard/**").hasRole("SELLER")
                         .requestMatchers("/api/v1/order/**").hasRole("SELLER")
                         .requestMatchers("/api/v1/auth/change-password").hasRole("SELLER")
+                        .requestMatchers("/api/v1/profile/**").hasRole("SELLER")
                         .requestMatchers(
                                 "/api/v1/auth/register",
                                 "/api/v1/auth/forgot-password",
@@ -82,12 +83,28 @@ public class SecurityConfig {
 
         CorsConfiguration config = new CorsConfiguration();
 
-        config.setAllowedOrigins(List.of("https://laundry-management-frontend.vercel.app"));
-        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        config.setAllowedOrigins(List.of(
+                "http://127.0.0.1:3000",
+                "http://localhost:3000",
+                "https://laundry-management-frontend.vercel.app"
+        ));
+
+        config.setAllowedMethods(List.of(
+                "GET",
+                "POST",
+                "PUT",
+                "PATCH",
+                "DELETE",
+                "OPTIONS"
+        ));
+
         config.setAllowedHeaders(List.of("*"));
+
         config.setAllowCredentials(true);
 
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        UrlBasedCorsConfigurationSource source =
+                new UrlBasedCorsConfigurationSource();
+
         source.registerCorsConfiguration("/**", config);
 
         return source;
