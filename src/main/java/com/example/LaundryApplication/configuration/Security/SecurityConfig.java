@@ -87,7 +87,7 @@ public class SecurityConfig {
         configuration.setAllowedOrigins(List.of(
                 "http://localhost:3000",
                 "http://127.0.0.1:3000",
-                "https://YOUR-EXACT-VERCEL-URL.vercel.app"
+                "https://laundry-management-frontend-swart.vercel.app"
         ));
 
         configuration.setAllowedMethods(List.of(
