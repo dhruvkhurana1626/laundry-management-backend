@@ -57,6 +57,10 @@ public class AuthService {
             throw new BusinessException("Email already registered");
         }
 
+        if (userRepository.existsByUsername(request.getName())) {
+            throw new BusinessException("Username already used");
+        }
+
         User user = new User();
         user.setUsername(request.getName());
         user.setEmail(request.getEmail());
@@ -86,8 +90,15 @@ public class AuthService {
             throw new InvalidRequestException("New passwords do not match");
         }
 
-        // 3. Encode and save the new password
-        user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        // Invalidate refresh token
+        refreshTokenRepository.findByUser(user)
+                .ifPresent(refreshTokenRepository::delete);
+
+        // Change password
+        user.setPassword(
+                passwordEncoder.encode(request.getNewPassword())
+        );
+
         userRepository.save(user);
 
     }

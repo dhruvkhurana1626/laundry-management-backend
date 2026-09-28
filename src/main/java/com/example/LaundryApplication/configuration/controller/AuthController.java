@@ -74,7 +74,7 @@ public class AuthController {
 
         authService.changePassword(changePasswordRequest);
 
-        return ResponseEntity.ok("Password changed successfully");
+        return ResponseEntity.ok("Password changed successfully. Please login again.");
     }
 
     @PostMapping("/forgot-password")
