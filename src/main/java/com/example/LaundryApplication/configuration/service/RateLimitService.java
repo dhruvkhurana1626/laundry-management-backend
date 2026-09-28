@@ -19,7 +19,7 @@ public class RateLimitService {
         Bucket bucket = buckets.computeIfAbsent(key, k -> {
 
             Refill refill = Refill.intervally(
-                    3,
+                    10,
                     Duration.ofMinutes(15)
             );
 
