@@ -96,4 +96,25 @@ public class ProfileService {
 
         return getProfile();
     }
+
+    public ProfileResponse deleteProfileImage() {
+
+        User user = validation.getCurrentUser();
+
+        if (user.getProfileImageUrl() == null) {
+            throw new BusinessException(
+                    "No profile image to remove"
+            );
+        }
+
+        imageStorageService.deleteProfileImage(
+                user.getProfileImageUrl()
+        );
+
+        user.setProfileImageUrl(null);
+
+        userRepository.save(user);
+
+        return getProfile();
+    }
 }

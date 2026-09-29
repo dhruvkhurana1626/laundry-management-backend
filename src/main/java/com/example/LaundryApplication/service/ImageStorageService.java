@@ -1,5 +1,6 @@
 package com.example.LaundryApplication.service;
 
+import com.example.LaundryApplication.ecxeption.BusinessException;
 import org.springframework.stereotype.Service;
 
 import lombok.RequiredArgsConstructor;
@@ -7,6 +8,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.multipart.MultipartFile;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
 import java.io.IOException;
@@ -71,5 +73,35 @@ public class ImageStorageService {
         return s3Client.serviceClientConfiguration()
                 .region()
                 .id();
+    }
+
+    public void deleteProfileImage(String imageUrl) {
+
+        String key = extractKeyFromUrl(imageUrl);
+
+        DeleteObjectRequest deleteObjectRequest =
+                DeleteObjectRequest.builder()
+                        .bucket(bucketName)
+                        .key(key)
+                        .build();
+
+        s3Client.deleteObject(deleteObjectRequest);
+    }
+
+    //Helper Method
+    private String extractKeyFromUrl(String imageUrl) {
+
+        String prefix =
+                "https://" + bucketName + ".s3."
+                        + getRegion()
+                        + ".amazonaws.com/";
+
+        if (!imageUrl.startsWith(prefix)) {
+            throw new BusinessException(
+                    "Invalid profile image URL"
+            );
+        }
+
+        return imageUrl.substring(prefix.length());
     }
 }

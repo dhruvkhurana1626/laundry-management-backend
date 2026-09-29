@@ -41,4 +41,12 @@ public class ProfileController {
         );
     }
 
+    @DeleteMapping("/image")
+    public ResponseEntity<ProfileResponse> deleteProfileImage() {
+
+        return ResponseEntity.ok(
+                profileService.deleteProfileImage()
+        );
+    }
+
 }
