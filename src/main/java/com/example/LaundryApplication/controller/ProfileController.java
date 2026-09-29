@@ -6,6 +6,7 @@ import com.example.LaundryApplication.service.ProfileService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/api/v1/profile")
@@ -28,6 +29,15 @@ public class ProfileController {
 
         return ResponseEntity.ok(
                 profileService.updateProfile(request)
+        );
+    }
+
+    @PutMapping("/image")
+    public ResponseEntity<ProfileResponse> updateProfileImage(
+            @RequestParam("file") MultipartFile file) {
+
+        return ResponseEntity.ok(
+                profileService.updateProfileImage(file)
         );
     }
 
