@@ -8,6 +8,7 @@ import com.example.LaundryApplication.dto.response.OrderResponse;
 import com.example.LaundryApplication.dto.response.PricingResponse;
 import com.example.LaundryApplication.ecxeption.BusinessException;
 import com.example.LaundryApplication.ecxeption.ResourceNotFoundException;
+import com.example.LaundryApplication.enums.GarmentType;
 import com.example.LaundryApplication.enums.OrderStatus;
 import com.example.LaundryApplication.model.Garment;
 import com.example.LaundryApplication.model.OrderEntity;
@@ -189,6 +190,12 @@ public class OrderService {
                                 "Order with id " + id + " not found"
                         )
                 );
+
+        if(order.getStatus()==OrderStatus.DELIVERED){
+            throw new BusinessException(
+                    "You are not allowed to Edit the Delivered Order"
+            );
+        }
 
         if (!order.getUser().getId().equals(currentUser.getId())) {
             throw new BusinessException(
