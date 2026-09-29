@@ -14,12 +14,12 @@ import com.example.LaundryApplication.model.User;
 import com.example.LaundryApplication.service.PricingService;
 import com.example.LaundryApplication.utility.Email;
 import com.example.LaundryApplication.utility.Validation;
+import jakarta.annotation.Nullable;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -127,7 +127,7 @@ public class AuthService {
         passwordResetTokenRepository.save(passwordResetToken);
 
         //update this with frontend-url
-        String resetLink = "http://127.0.0.1:3000/reset-password.html?token=" + token;
+        String resetLink = "https://laundry-management-frontend-swart.vercel.app?token=" + token;
 
         CompletableFuture.runAsync(()->{
             email.sendPasswordResetEmail(user.getEmail(),resetLink);

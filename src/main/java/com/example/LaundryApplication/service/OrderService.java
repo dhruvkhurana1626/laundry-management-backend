@@ -1,8 +1,11 @@
 package com.example.LaundryApplication.service;
 
 import com.example.LaundryApplication.dao.OrderEntityDao;
+import com.example.LaundryApplication.dto.request.GarmentRequest;
 import com.example.LaundryApplication.dto.request.OrderRequest;
+import com.example.LaundryApplication.dto.request.OrderUpdateRequest;
 import com.example.LaundryApplication.dto.response.OrderResponse;
+import com.example.LaundryApplication.dto.response.PricingResponse;
 import com.example.LaundryApplication.ecxeption.BusinessException;
 import com.example.LaundryApplication.ecxeption.ResourceNotFoundException;
 import com.example.LaundryApplication.enums.OrderStatus;
@@ -26,6 +29,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
@@ -157,6 +161,7 @@ public class OrderService {
 
     }
 
+    // Delete Order
     public void deleteOrder(Integer orderId) {
        OrderEntity order = validation.findOrderById_ReturnOrder(orderId);
 
@@ -169,5 +174,76 @@ public class OrderService {
         }
 
        orderEntityDao.delete(order);
+    }
+
+    // Update Order
+    public OrderResponse updateOrder(
+            Integer id,
+            @Valid OrderUpdateRequest request) {
+
+        User currentUser = validation.getCurrentUser();
+
+        OrderEntity order = orderEntityDao.findById(id)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "Order with id " + id + " not found"
+                        )
+                );
+
+        if (!order.getUser().getId().equals(currentUser.getId())) {
+            throw new BusinessException(
+                    "You do not have permission to modify this order"
+            );
+        }
+
+        // Customer details
+        if (request.getCustomerName() != null) {
+            order.setCustomerName(request.getCustomerName());
+        }
+
+        if (request.getPhone() != null) {
+            order.setPhone(request.getPhone());
+        }
+
+        if (request.getEmail() != null) {
+            order.setEmail(request.getEmail());
+        }
+
+        // Garments
+        if (request.getGarmentRequestList() != null) {
+
+            List<Garment> updatedGarments = new ArrayList<>();
+
+            BigDecimal totalAmount = BigDecimal.ZERO;
+
+            for (GarmentRequest garmentRequest : request.getGarmentRequestList()) {
+
+                BigDecimal price = pricingService
+                        .getPrice(garmentRequest.getType());
+
+                BigDecimal garmentTotal = price.multiply(
+                        BigDecimal.valueOf(garmentRequest.getQuantity())
+                );
+
+                Garment garment = new Garment();
+
+                garment.setType(garmentRequest.getType());
+                garment.setQuantity(garmentRequest.getQuantity());
+                garment.setOrder(order);
+
+                updatedGarments.add(garment);
+
+                totalAmount = totalAmount.add(garmentTotal);
+            }
+
+            order.getGarmentList().clear();
+            order.getGarmentList().addAll(updatedGarments);
+
+            order.setTotalAmount(totalAmount);
+        }
+
+        OrderEntity savedOrder = orderEntityDao.save(order);
+
+        return OrderTransformer.orderToOrderResponse(savedOrder);
     }
 }

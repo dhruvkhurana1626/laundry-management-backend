@@ -1,6 +1,7 @@
 package com.example.LaundryApplication.controller;
 
 import com.example.LaundryApplication.dto.request.OrderRequest;
+import com.example.LaundryApplication.dto.request.OrderUpdateRequest;
 import com.example.LaundryApplication.dto.response.OrderResponse;
 import com.example.LaundryApplication.enums.OrderStatus;
 import com.example.LaundryApplication.service.OrderService;
@@ -61,6 +62,14 @@ public class OrderController {
     public String deleteOrder(@PathVariable Integer orderId){
         orderService.deleteOrder(orderId);
         return "Order Deleted SuccessFully";
+    }
+
+    @PatchMapping("/{id}")
+    public ResponseEntity<OrderResponse> updateOrder(
+            @PathVariable Integer id,
+            @Valid @RequestBody OrderUpdateRequest orderUpdateRequest) {
+
+        return ResponseEntity.ok(orderService.updateOrder(id, orderUpdateRequest));
     }
 
 
