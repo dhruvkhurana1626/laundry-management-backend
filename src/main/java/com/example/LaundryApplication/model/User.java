@@ -2,6 +2,8 @@ package com.example.LaundryApplication.model;
 
 import com.example.LaundryApplication.enums.Role;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;
 import lombok.Setter;
 

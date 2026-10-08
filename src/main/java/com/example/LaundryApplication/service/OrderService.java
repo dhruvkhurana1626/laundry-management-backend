@@ -7,6 +7,7 @@ import com.example.LaundryApplication.dto.request.OrderUpdateRequest;
 import com.example.LaundryApplication.dto.response.OrderResponse;
 import com.example.LaundryApplication.dto.response.PricingResponse;
 import com.example.LaundryApplication.ecxeption.BusinessException;
+import com.example.LaundryApplication.ecxeption.ForbiddenException;
 import com.example.LaundryApplication.ecxeption.ResourceNotFoundException;
 import com.example.LaundryApplication.enums.GarmentType;
 import com.example.LaundryApplication.enums.OrderStatus;
@@ -30,8 +31,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
 @Slf4j
@@ -124,7 +124,7 @@ public class OrderService {
                         new ResourceNotFoundException("Order not found"));
 
         if (!order.getUser().getId().equals(validation.getCurrentUser().getId())) {
-            throw new BusinessException("You don't have permission to make changes");
+            throw new ForbiddenException("You don't have permission to make changes");
         }
 
         if (order.getStatus() == OrderStatus.DELIVERED) {
@@ -171,7 +171,7 @@ public class OrderService {
        }
 
         if (!order.getUser().getId().equals(validation.getCurrentUser().getId())) {
-            throw new BusinessException("You don't have permission to delete this Order");
+            throw new ForbiddenException("You don't have permission to delete this Order");
         }
 
        orderEntityDao.delete(order);
@@ -191,15 +191,36 @@ public class OrderService {
                         )
                 );
 
+        if (!order.getUser().getId().equals(currentUser.getId())) {
+            throw new ForbiddenException(
+                    "You do not have permission to modify this order"
+            );
+        }
+
         if(order.getStatus()==OrderStatus.DELIVERED){
             throw new BusinessException(
                     "You are not allowed to Edit the Delivered Order"
             );
         }
 
-        if (!order.getUser().getId().equals(currentUser.getId())) {
-            throw new BusinessException(
-                    "You do not have permission to modify this order"
+        //enforcing the logic - to check - nd stop it right there
+        //if same garmentType is passed on twice by frontend
+        Set<GarmentType> types = new HashSet<>();
+        for (GarmentRequest requests : request.getGarmentRequestList()) {
+            if (!types.add(requests.getType())) {
+                throw new BusinessException(
+                        "Duplicate garment type: " + requests.getType()
+                );
+            }
+        }
+
+        //Creating map for existing garment type to fetch the old price
+        Map<GarmentType, BigDecimal> oldPriceMap = new HashMap<>();
+
+        for (Garment garment : order.getGarmentList()) {
+            oldPriceMap.put(
+                    garment.getType(),
+                    garment.getPricePerItem()
             );
         }
 
@@ -225,8 +246,16 @@ public class OrderService {
 
             for (GarmentRequest garmentRequest : request.getGarmentRequestList()) {
 
-                BigDecimal price = pricingService
-                        .getPrice(garmentRequest.getType());
+                BigDecimal price = BigDecimal.ZERO;
+
+                if(oldPriceMap.containsKey(garmentRequest.getType())){
+                    price = oldPriceMap.get(garmentRequest.getType());
+                }
+                else{
+                    price = pricingService.getPrice(garmentRequest.getType());
+                }
+
+                System.out.println(price);
 
                 BigDecimal garmentTotal = price.multiply(
                         BigDecimal.valueOf(garmentRequest.getQuantity())
@@ -237,6 +266,7 @@ public class OrderService {
                 garment.setType(garmentRequest.getType());
                 garment.setQuantity(garmentRequest.getQuantity());
                 garment.setOrder(order);
+                garment.setPricePerItem(price);
 
                 updatedGarments.add(garment);
 

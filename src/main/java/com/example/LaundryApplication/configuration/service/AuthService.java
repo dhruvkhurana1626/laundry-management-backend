@@ -158,6 +158,12 @@ public class AuthService {
 
         userRepository.save(user);
 
+        // Invalidate refresh token
+        refreshTokenRepository.findByUser(user)
+                .ifPresent(refreshTokenRepository::delete);
+
+        // Deleting the reset token - given to user - when they request for it - by clicking on
+        // forgot passwrod - send reset link by Email
         passwordResetTokenRepository.delete(resetToken);
     }
 

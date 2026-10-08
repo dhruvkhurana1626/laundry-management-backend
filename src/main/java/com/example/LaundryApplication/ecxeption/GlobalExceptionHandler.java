@@ -53,7 +53,10 @@ public class GlobalExceptionHandler {
     // 4. Fixed parameter type to match BusinessException
     @ExceptionHandler(BusinessException.class)
     public ResponseEntity<ErrorResponse> handleBusiness(BusinessException ex) {
-        return buildErrorResponse(ex.getMessage(), HttpStatus.BAD_REQUEST);
+        return buildErrorResponse(
+                ex.getMessage(),
+                HttpStatus.BAD_REQUEST
+        );
     }
 
     // 5. Fixed parameter type to match InvalidRequestException
@@ -65,7 +68,11 @@ public class GlobalExceptionHandler {
     // 6. Generic exception fallback (500 Internal Server Error)
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGenericException(Exception ex) {
-        return buildErrorResponse("An unexpected error occurred: " + ex.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        log.error("Unexpected error occurred", ex);
+        return buildErrorResponse(
+                "An unexpected error occurred",
+                HttpStatus.INTERNAL_SERVER_ERROR
+        );
     }
 
     // 7. Handle Authentication/Bad Credentials Failure
@@ -81,6 +88,17 @@ public class GlobalExceptionHandler {
         body.put("message", "Invalid email or password"); // Safe, sanitized client message
 
         return new ResponseEntity<>(body, HttpStatus.UNAUTHORIZED);
+    }
+
+    // 8. Hanlde forbidden Exception like - when the Logged User dont have the permission to do something
+    @ExceptionHandler(ForbiddenException.class)
+    public ResponseEntity<ErrorResponse> handleForbidden(
+            ForbiddenException ex) {
+
+        return buildErrorResponse(
+                ex.getMessage(),
+                HttpStatus.FORBIDDEN
+        );
     }
 
     // Inside GlobalExceptionHandler.java

@@ -5,6 +5,7 @@ import com.example.LaundryApplication.configuration.model.RefreshToken;
 import com.example.LaundryApplication.dao.OrderEntityDao;
 import com.example.LaundryApplication.dao.UserRepository;
 import com.example.LaundryApplication.ecxeption.BusinessException;
+import com.example.LaundryApplication.ecxeption.ForbiddenException;
 import com.example.LaundryApplication.ecxeption.ResourceNotFoundException;
 import com.example.LaundryApplication.model.OrderEntity;
 import com.example.LaundryApplication.model.User;
@@ -39,7 +40,7 @@ public class Validation {
         String email = authentication.getName();
 
         return userRepository.findByEmail(email)
-                .orElseThrow(() -> new BusinessException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
     }
 

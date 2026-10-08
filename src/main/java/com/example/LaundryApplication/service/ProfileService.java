@@ -97,7 +97,7 @@ public class ProfileService {
         return getProfile();
     }
 
-    public ProfileResponse deleteProfileImage() {
+    public ProfileResponse  deleteProfileImage() {
 
         User user = validation.getCurrentUser();
 
