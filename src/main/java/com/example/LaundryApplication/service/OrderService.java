@@ -1,11 +1,11 @@
 package com.example.LaundryApplication.service;
 
+import com.example.LaundryApplication.Event.OrderDeliveredEvent;
 import com.example.LaundryApplication.dao.OrderEntityDao;
 import com.example.LaundryApplication.dto.request.GarmentRequest;
 import com.example.LaundryApplication.dto.request.OrderRequest;
 import com.example.LaundryApplication.dto.request.OrderUpdateRequest;
 import com.example.LaundryApplication.dto.response.OrderResponse;
-import com.example.LaundryApplication.dto.response.PricingResponse;
 import com.example.LaundryApplication.ecxeption.BusinessException;
 import com.example.LaundryApplication.ecxeption.ForbiddenException;
 import com.example.LaundryApplication.ecxeption.ResourceNotFoundException;
@@ -23,6 +23,7 @@ import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -32,7 +33,6 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
 
 @Slf4j
 @Service
@@ -43,6 +43,7 @@ public class OrderService {
     private final OrderEntityDao orderEntityDao;
     private final Email email;
     private final PricingService pricingService;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
     public OrderResponse createOrder(@Valid OrderRequest orderRequest){
@@ -133,17 +134,16 @@ public class OrderService {
             );
         }
 
-         if(status==OrderStatus.DELIVERED){
-             CompletableFuture.runAsync(() -> {
-                 email.sendEmailWhenOrderDelivered(order);
-             }).exceptionally(ex -> {
-                 log.error("Failed to send DELIVERED email for order {}", order.getId(), ex);
-                 return null;
-             });
+        order.setStatus(status);
+
+        if (status == OrderStatus.DELIVERED) {
+            eventPublisher.publishEvent(
+                    new OrderDeliveredEvent(order.getId())
+            );
         }
 
-        order.setStatus(status);
-        return OrderTransformer.orderToOrderResponse(order);
+        OrderResponse orderResponse = OrderTransformer.orderToOrderResponse(order);
+        return orderResponse;
     }
 
     public List<OrderResponse> getRecentOrders(int page, int size) {
@@ -254,8 +254,6 @@ public class OrderService {
                 else{
                     price = pricingService.getPrice(garmentRequest.getType());
                 }
-
-                System.out.println(price);
 
                 BigDecimal garmentTotal = price.multiply(
                         BigDecimal.valueOf(garmentRequest.getQuantity())

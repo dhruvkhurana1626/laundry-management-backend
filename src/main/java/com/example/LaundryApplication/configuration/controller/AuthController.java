@@ -8,7 +8,6 @@ import com.example.LaundryApplication.ecxeption.TooManyRequestsException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -88,7 +87,7 @@ public class AuthController {
 
         //Ratelimiting added
         if (!rateLimitService.isAllowed(rateLimitKey)) {
-            throw new TooManyRequestsException("Too many login attempts. Please try again in 15 minutes.");
+            throw new TooManyRequestsException("Too many Pass forget attempts. Please try again in 15 minutes.");
         }
 
         authService.forgotPassword(request);

@@ -5,19 +5,16 @@ import com.example.LaundryApplication.configuration.model.RefreshToken;
 import com.example.LaundryApplication.dao.OrderEntityDao;
 import com.example.LaundryApplication.dao.UserRepository;
 import com.example.LaundryApplication.ecxeption.BusinessException;
-import com.example.LaundryApplication.ecxeption.ForbiddenException;
 import com.example.LaundryApplication.ecxeption.ResourceNotFoundException;
 import com.example.LaundryApplication.model.OrderEntity;
 import com.example.LaundryApplication.model.User;
 import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.jpa.repository.Query;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
-import java.util.Optional;
 
 @Component
 @RequiredArgsConstructor
