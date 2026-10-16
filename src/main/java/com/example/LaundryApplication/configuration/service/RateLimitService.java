@@ -14,7 +14,7 @@ public class RateLimitService {
 
     private final Cache<String, Bucket> buckets =
             Caffeine.newBuilder()
-                    .expireAfterAccess(Duration.ofMinutes(30))
+                    .expireAfterAccess(Duration.ofMinutes(10))
                     .maximumSize(10_000)
                     .build();
 
