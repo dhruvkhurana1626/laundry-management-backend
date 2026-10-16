@@ -71,6 +71,7 @@ public class ProfileService {
         return getProfile();
     }
 
+    @Transactional
     public ProfileResponse updateProfileImage(MultipartFile file) {
 
         User user = validation.getCurrentUser();
@@ -79,20 +80,20 @@ public class ProfileService {
             throw new BusinessException("Profile image is required");
         }
 
-        String contentType = file.getContentType();
+        //get the current image URL
+        String oldImageUrl = user.getProfileImageUrl();
 
-        if (!"image/jpeg".equals(contentType)
-                && !"image/png".equals(contentType)) {
-            throw new BusinessException(
-                    "Only JPEG and PNG images are allowed"
-            );
-        }
+        // Validate content and upload the new image
+        String newImageUrl = imageStorageService.uploadProfileImage(file);
 
-        String imageUrl = imageStorageService.uploadProfileImage(file);
-
-        user.setProfileImageUrl(imageUrl);
-
+        //Update the Database
+        user.setProfileImageUrl(newImageUrl);
         userRepository.save(user);
+
+        //Delete the old image from S3 Bucket
+        if (oldImageUrl != null && !oldImageUrl.isBlank()) {
+            imageStorageService.deleteProfileImage(oldImageUrl);
+        }
 
         return getProfile();
     }

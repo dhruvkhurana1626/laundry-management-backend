@@ -2,6 +2,7 @@ package com.example.LaundryApplication.service;
 
 import com.example.LaundryApplication.Event.OrderDeliveredEvent;
 import com.example.LaundryApplication.dao.OrderEntityDao;
+import com.example.LaundryApplication.dao.PricingRepository;
 import com.example.LaundryApplication.dto.request.GarmentRequest;
 import com.example.LaundryApplication.dto.request.OrderRequest;
 import com.example.LaundryApplication.dto.request.OrderUpdateRequest;
@@ -13,10 +14,10 @@ import com.example.LaundryApplication.enums.GarmentType;
 import com.example.LaundryApplication.enums.OrderStatus;
 import com.example.LaundryApplication.model.Garment;
 import com.example.LaundryApplication.model.OrderEntity;
+import com.example.LaundryApplication.model.Pricing;
 import com.example.LaundryApplication.model.User;
 import com.example.LaundryApplication.transformer.GarmentTransformer;
 import com.example.LaundryApplication.transformer.OrderTransformer;
-import com.example.LaundryApplication.utility.Email;
 import com.example.LaundryApplication.utility.OrderSpecification;
 import com.example.LaundryApplication.utility.Validation;
 import jakarta.transaction.Transactional;
@@ -33,6 +34,7 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -41,17 +43,19 @@ public class OrderService {
 
     private final Validation validation;
     private final OrderEntityDao orderEntityDao;
-    private final Email email;
-    private final PricingService pricingService;
+    private final PricingRepository pricingRepository;
     private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
     public OrderResponse createOrder(@Valid OrderRequest orderRequest){
 
         // 1- Checking if Garment is not added in the Order
-        if(orderRequest.getGarmentRequestList()==null || orderRequest.getGarmentRequestList().size()==0){
+        if(orderRequest.getGarmentRequestList()==null || orderRequest.getGarmentRequestList().isEmpty()){
             throw new BusinessException("Garments Required");
         }
+
+        User user = validation.getCurrentUser();
+        Map<GarmentType,BigDecimal> garmentTypeToPriceMap = getPriceMap(user);
 
         // 2- Order Request to Order
         OrderEntity orderEntity = OrderTransformer.orderRequestToOrder(orderRequest);
@@ -68,7 +72,13 @@ public class OrderService {
             garment.setOrder(orderEntity);
 
             // Calculation price per Item
-            BigDecimal pricePerItem = pricingService.getPrice(garment.getType());
+            BigDecimal pricePerItem = garmentTypeToPriceMap.get(garment.getType());
+
+            if (pricePerItem == null) {
+                throw new BusinessException(
+                        "Price not configured for garment: " + garment.getType()
+                );
+            }
 
             // Setting price per Item to garment
             garment.setPricePerItem(pricePerItem);
@@ -84,13 +94,15 @@ public class OrderService {
         orderEntity.setTotalAmount(totalAmount);
         orderEntity.setGarmentList(garmentList);
         orderEntity.setStatus(OrderStatus.RECEIVED);
-        orderEntity.setUser(validation.getCurrentUser());
+        orderEntity.setUser(user);
 
         // 6- Saving Order
         OrderEntity savedOrder = orderEntityDao.save(orderEntity);
 
         // 7- Return Order Response
-        return OrderTransformer.orderToOrderResponse(savedOrder);
+        OrderResponse orderResponse =  OrderTransformer.orderToOrderResponse(savedOrder);
+
+        return orderResponse;
     }
 
     public Page<OrderResponse> getOrders(
@@ -147,6 +159,14 @@ public class OrderService {
     }
 
     public List<OrderResponse> getRecentOrders(int page, int size) {
+
+        if (page < 0) {
+            throw new BusinessException("Page cannot be negative");
+        }
+
+        if (size < 1 || size > 100) {
+            throw new BusinessException("Page size must be between 1 and 100");
+        }
 
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
 
@@ -224,6 +244,10 @@ public class OrderService {
             );
         }
 
+        //Creating map for User with new price
+        User user = validation.getCurrentUser();
+        Map<GarmentType,BigDecimal> garmentTypeToPriceMap = getPriceMap(user);
+
         // Customer details
         if (request.getCustomerName() != null) {
             order.setCustomerName(request.getCustomerName());
@@ -252,7 +276,7 @@ public class OrderService {
                     price = oldPriceMap.get(garmentRequest.getType());
                 }
                 else{
-                    price = pricingService.getPrice(garmentRequest.getType());
+                    price = garmentTypeToPriceMap.get(garmentRequest.getType());
                 }
 
                 BigDecimal garmentTotal = price.multiply(
@@ -280,5 +304,15 @@ public class OrderService {
         OrderEntity savedOrder = orderEntityDao.save(order);
 
         return OrderTransformer.orderToOrderResponse(savedOrder);
+    }
+
+    //Helping method to load - Map of GarmetType to Price
+    public Map<GarmentType, BigDecimal> getPriceMap(User user) {
+        return (Map<GarmentType, BigDecimal>) pricingRepository.findAllByUser(user)
+                .stream()
+                .collect(Collectors.toMap(
+                        Pricing::getGarmentType,
+                        Pricing::getPrice
+                ));
     }
 }

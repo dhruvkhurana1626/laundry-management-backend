@@ -1,5 +1,6 @@
 package com.example.LaundryApplication.utility;
 
+import com.example.LaundryApplication.configuration.Security.CustomUserDetailsService;
 import com.example.LaundryApplication.configuration.dao.RefreshTokenRepository;
 import com.example.LaundryApplication.configuration.model.RefreshToken;
 import com.example.LaundryApplication.dao.OrderEntityDao;
@@ -10,9 +11,11 @@ import com.example.LaundryApplication.model.OrderEntity;
 import com.example.LaundryApplication.model.User;
 import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
 
@@ -30,14 +33,12 @@ public class Validation {
     }
 
     public User getCurrentUser() {
-
         Authentication authentication =
                 SecurityContextHolder.getContext().getAuthentication();
 
-        String email = authentication.getName();
-
-        return userRepository.findByEmail(email)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        return userRepository.findByEmail(authentication.getName())
+                .orElseThrow(()-> new ResourceNotFoundException("No user found with this Email")
+                );
 
     }
 

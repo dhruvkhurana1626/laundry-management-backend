@@ -1,4 +1,10 @@
 package com.example.LaundryApplication.dao;
 
-public class DashboardSummary {
+import java.math.BigDecimal;
+
+public interface DashboardSummary {
+    Long getTotalOrders();
+    BigDecimal getTotalRevenue();
+    Long getDeliveredCount();
+    Long getReceivedCount();
 }

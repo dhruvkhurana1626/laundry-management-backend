@@ -1,0 +1,2 @@
+USE laundryapplication;
+SHOW TABLES;

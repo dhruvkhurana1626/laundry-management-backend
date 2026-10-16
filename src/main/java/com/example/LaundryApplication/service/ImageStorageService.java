@@ -1,6 +1,7 @@
 package com.example.LaundryApplication.service;
 
 import com.example.LaundryApplication.ecxeption.BusinessException;
+import org.apache.tika.Tika;
 import org.springframework.stereotype.Service;
 
 import lombok.RequiredArgsConstructor;
@@ -10,6 +11,7 @@ import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+import software.amazon.awssdk.services.s3.model.S3Exception;
 
 import java.io.IOException;
 import java.util.UUID;
@@ -25,42 +27,46 @@ public class ImageStorageService {
 
     public String uploadProfileImage(MultipartFile file) {
 
-        String originalFilename = file.getOriginalFilename();
-
-        String extension = "";
-
-        if (originalFilename != null && originalFilename.contains(".")) {
-            extension = originalFilename.substring(
-                    originalFilename.lastIndexOf(".")
-            );
+        if (file == null || file.isEmpty()) {
+            throw new BusinessException("Image cannot be empty");
         }
+
+        byte[] bytes;
+
+        try {
+            bytes = file.getBytes();
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to read image", e);
+        }
+
+        String detectedType = new Tika().detect(bytes);
+
+        String extension = switch (detectedType) {
+            case "image/jpeg" -> ".jpg";
+            case "image/png" -> ".png";
+            default -> throw new BusinessException(
+                    "Only JPEG and PNG images are allowed"
+            );
+        };
 
         String fileName = "profile-images/"
                 + UUID.randomUUID()
                 + extension;
 
+        PutObjectRequest putObjectRequest =
+                PutObjectRequest.builder()
+                        .bucket(bucketName)
+                        .key(fileName)
+                        .contentType(detectedType)
+                        .build();
+
         try {
-
-            PutObjectRequest putObjectRequest =
-                    PutObjectRequest.builder()
-                            .bucket(bucketName)
-                            .key(fileName)
-                            .contentType(file.getContentType())
-                            .build();
-
             s3Client.putObject(
                     putObjectRequest,
-                    RequestBody.fromInputStream(
-                            file.getInputStream(),
-                            file.getSize()
-                    )
+                    RequestBody.fromBytes(bytes)
             );
-
-        } catch (IOException e) {
-            throw new RuntimeException(
-                    "Failed to upload profile image",
-                    e
-            );
+        } catch (S3Exception e) {
+            throw new RuntimeException("Failed to upload profile image", e);
         }
 
         return "https://" + bucketName
@@ -89,6 +95,7 @@ public class ImageStorageService {
     }
 
     //Helper Method
+    //to extract the key
     private String extractKeyFromUrl(String imageUrl) {
 
         String prefix =
@@ -103,5 +110,23 @@ public class ImageStorageService {
         }
 
         return imageUrl.substring(prefix.length());
+    }
+
+    //helper method
+    //to validate the actual type of content
+    private String validateAndGetExtension(MultipartFile file)
+            throws IOException {
+
+        if (file.isEmpty()) {
+            throw new BusinessException("Image cannot be empty");
+        }
+
+        String detectedType = new Tika().detect(file.getInputStream());
+
+        return switch (detectedType) {
+            case "image/jpeg" -> "jpg";
+            case "image/png" -> "png";
+            default -> throw new BusinessException("Invalid image type");
+        };
     }
 }
